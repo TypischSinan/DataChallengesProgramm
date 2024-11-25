@@ -47,14 +47,12 @@ def run_tsne(data, n_components=2, perplexity=30.0, learning_rate=200.0):
 
 
 def encode_columns(df):
-    # Handle categorical columns using LabelEncoder
     for col in df.select_dtypes(include=['object']).columns:
         le = LabelEncoder()
         df[col] = le.fit_transform(df[col])
     return df
 
 
-# Encode categorical columns in the dataset
 data = encode_columns(data)
 
 
@@ -73,25 +71,21 @@ def show_page(data):
             data, selected_columns, group_by_column)
         tsne_results = run_tsne(processed_data)
 
-        # Check if group_by_data is numeric or categorical
         if pd.api.types.is_numeric_dtype(group_by_data):
-            # Use continuous colorscale
             fig = px.scatter(
                 x=tsne_results[:, 0],
                 y=tsne_results[:, 1],
                 color=group_by_data,
-                color_continuous_scale='RdYlGn_r',  # Green to red
+                color_continuous_scale='RdYlGn_r',
                 title="t-SNE Dimensionality Reduction",
                 labels={'x': 't-SNE Component 1', 'y': 't-SNE Component 2'}
             )
         else:
-            # For 'Male' and 'Female', assign specific colors
             categories = group_by_data.unique()
             color_discrete_map = None
             if set(categories) == set(['Male', 'Female']) or set(categories) == set(['Female', 'Male']):
                 color_discrete_map = {'Male': 'blue', 'Female': 'pink'}
             else:
-                # Assign a default color mapping
                 default_colors = px.colors.qualitative.Plotly
                 color_discrete_map = {category: default_colors[i % len(
                     default_colors)] for i, category in enumerate(categories)}
