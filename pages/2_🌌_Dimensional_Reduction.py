@@ -78,7 +78,7 @@ def show_page(data):
                 color=group_by_data,
                 color_continuous_scale='RdYlGn_r',
                 title="t-SNE Dimensionality Reduction",
-                labels={'x': 't-SNE Component 1', 'y': 't-SNE Component 2'}
+
             )
         else:
             categories = group_by_data.unique()
@@ -95,7 +95,6 @@ def show_page(data):
                 color=group_by_data,
                 color_discrete_map=color_discrete_map,
                 title="t-SNE Dimensionality Reduction",
-                labels={'x': 't-SNE Component 1', 'y': 't-SNE Component 2'}
             )
 
         fig.update_traces(marker=dict(opacity=0.6, size=5))
