@@ -1,0 +1,10 @@
+scikit-learn
+umap-learn
+trimap
+streamlit
+streamlit-option-menu
+pandas
+matplotlib
+seaborn
+altair
+plotly
