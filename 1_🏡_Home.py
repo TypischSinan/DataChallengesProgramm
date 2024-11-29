@@ -31,13 +31,13 @@ def show_page(data):
     st.write(data.describe())
 
     st.header("Visualization")
-    df_selected = data[['Patient number', 'Diagnosis']]
-    df_selected.drop_duplicates(subset='Patient number')
-    plotly_chart = px.bar(df_selected, x='Patient number', y='Diagnosis')
+    df_selected = data[['Patient Number', 'Diagnosis']]
+    df_selected.drop_duplicates(subset='Patient Number')
+    plotly_chart = px.bar(df_selected, x='Patient Number', y='Diagnosis')
     st.plotly_chart(plotly_chart)
 
-    df_selected = data[['Patient number', 'Sex', 'Diagnosis']]
-    df_selected = df_selected.drop_duplicates(subset='Patient number')
+    df_selected = data[['Patient Number', 'Sex', 'Diagnosis']]
+    df_selected = df_selected.drop_duplicates(subset='Patient Number')
 
     df_counts = df_selected.groupby(
         ['Diagnosis', 'Sex']).size().reset_index(name='Count')
