@@ -53,8 +53,6 @@ else:
         default=["Patient Number"]  # No columns selected by default
     )
 
-# Filter data based on column selection
-selected_data = numeric_data[columns_for_clustering]
 
 # Apply imputation if enabled
 if apply_imputation:
@@ -65,12 +63,21 @@ if apply_imputation:
     elif imputation_method == "Most Frequent":
         imputer = SimpleImputer(strategy="most_frequent")
 
-    selected_data = pd.DataFrame(imputer.fit_transform(
-        selected_data), columns=selected_data.columns)
+    # Impute only numeric columns
+    numeric_only = columns_for_clustering.select_dtypes(
+        include=['float64', 'int64'])
+    imputed_data = imputer.fit_transform(numeric_only)
+    columns_for_clustering = pd.DataFrame(
+        imputed_data, columns=numeric_only.columns)
+
+# Ensure data for clustering is numeric
+numeric_columns = numeric_data[numeric_data.columns.intersection(
+    columns_for_clustering)]
+columns_for_clustering = numeric_columns.copy()
 
 # Scale data
 scaler = StandardScaler()
-scaled_data = scaler.fit_transform(selected_data)
+scaled_data = scaler.fit_transform(columns_for_clustering)
 
 # Parameter inputs for KMeans
 if clustering_algorithm == "KMeans":
