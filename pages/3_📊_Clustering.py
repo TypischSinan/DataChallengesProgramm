@@ -17,32 +17,18 @@ def load_data():
     return data
 
 
-# Load data
 data = load_data()
-
-# Sidebar configuration
 apply_imputation, imputation_method = configure_sidebar()
-
-# Extract only numeric columns
 numeric_data = data.select_dtypes(include=['float64', 'int64'])
-
-# Remove specific columns from numeric_data
 columns_to_drop = ["Adult BMI", "Child Weight", "Child Height", "Age"]
 numeric_data = numeric_data.drop(columns=columns_to_drop, errors='ignore')
 
-# Main content of the app
 st.title("Clustering Analysis")
-
-# Clustering settings
 st.subheader("Clustering Settings")
-
-# Select the clustering algorithm
 clustering_algorithm = st.radio(
     "Choose a clustering algorithm",
     ["KMeans", "DBSCAN", "OPTICS"]
 )
-
-# Select columns for clustering
 manuel_or_all = st.toggle("All columns for clustering", False)
 if manuel_or_all:
     columns_for_clustering = numeric_data.columns.tolist()
@@ -50,11 +36,9 @@ else:
     columns_for_clustering = st.multiselect(
         "Select columns for clustering:",
         options=numeric_data.columns.tolist(),
-        default=["Patient Number"]  # No columns selected by default
+        default=["Patient Number"]
     )
 
-
-# Apply imputation if enabled
 if apply_imputation:
     if imputation_method == "Mean":
         imputer = SimpleImputer(strategy="mean")
@@ -62,37 +46,28 @@ if apply_imputation:
         imputer = SimpleImputer(strategy="median")
     elif imputation_method == "Most Frequent":
         imputer = SimpleImputer(strategy="most_frequent")
-
-    # Impute only numeric columns
     numeric_only = columns_for_clustering.select_dtypes(
         include=['float64', 'int64'])
     imputed_data = imputer.fit_transform(numeric_only)
     columns_for_clustering = pd.DataFrame(
         imputed_data, columns=numeric_only.columns)
 
-# Ensure data for clustering is numeric
 numeric_columns = numeric_data[numeric_data.columns.intersection(
     columns_for_clustering)]
 columns_for_clustering = numeric_columns.copy()
-
-# Scale data
 scaler = StandardScaler()
 scaled_data = scaler.fit_transform(columns_for_clustering)
 
-# Parameter inputs for KMeans
 if clustering_algorithm == "KMeans":
     n_clusters = st.slider("Number of clusters (K)", 2, 10, 3)
 
-# Parameter inputs for DBSCAN
 if clustering_algorithm == "DBSCAN":
     eps = st.slider("Eps (Neighborhood radius)", 0.1, 5.0, 0.5)
     min_samples = st.slider("Minimum samples", 1, 20, 5)
 
-# Parameter inputs for OPTICS
 if clustering_algorithm == "OPTICS":
     min_samples = st.slider("Minimum samples", 1, 20, 5)
 
-# Reduce dimensions
 dimensionality_reduction = st.checkbox("Reduce dimensions (PCA)")
 if dimensionality_reduction:
     pca = PCA(n_components=2)
@@ -100,7 +75,6 @@ if dimensionality_reduction:
 else:
     reduced_data = scaled_data
 
-# Apply clustering
 if st.button("Run clustering"):
     if clustering_algorithm == "KMeans":
         model = KMeans(n_clusters=n_clusters, random_state=42)
@@ -108,41 +82,25 @@ if st.button("Run clustering"):
         model = DBSCAN(eps=eps, min_samples=min_samples)
     elif clustering_algorithm == "OPTICS":
         model = OPTICS(min_samples=min_samples)
-
-    # Compute cluster labels
     cluster_labels = model.fit_predict(reduced_data)
-
-    # Display results
     st.subheader("Clustering Results")
     st.write(f"Number of identified clusters: {len(set(cluster_labels))}")
-
-    # Quality measure: Silhouette coefficient
     if len(set(cluster_labels)) > 1:
         silhouette_avg = silhouette_score(reduced_data, cluster_labels)
         st.write(f"Silhouette coefficient: {silhouette_avg:.2f}")
     else:
-        st.write(
-            "Silhouette coefficient cannot be calculated.")
-
-       # Quality measure: Davies-Bouldin-Index
+        st.write("Silhouette coefficient cannot be calculated.")
     if len(set(cluster_labels)) > 1:
         dbi = davies_bouldin_score(reduced_data, cluster_labels)
         st.write(f"Davies-Bouldin-Index: {dbi:.2f}")
     else:
-        st.write(
-            "Davies-Bouldin-Index cannot be calculated.")
-
-    # Quality measure: Calinski-Harabasz-Index
+        st.write("Davies-Bouldin-Index cannot be calculated.")
     if len(set(cluster_labels)) > 1:
         chs = calinski_harabasz_score(reduced_data, cluster_labels)
         st.write(f"Calinski-Harabasz-Index: {chs:.2f}")
     else:
-        st.write(
-            "Calinski-Harabasz-Index cannot be calculated.")
-
-    # Visualize clusters
-    if reduced_data.shape[1] == 2:  # 2D visualization
-        # Plotly visualization
+        st.write("Calinski-Harabasz-Index cannot be calculated.")
+    if reduced_data.shape[1] == 2:
         df_cluster = pd.DataFrame(reduced_data, columns=["PC1", "PC2"])
         df_cluster['Cluster'] = cluster_labels
         fig = px.scatter(df_cluster, x="PC1", y="PC2", color="Cluster",
