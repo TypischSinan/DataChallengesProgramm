@@ -9,3 +9,4 @@ seaborn
 altair
 plotly
 librosa
+imbalanced-learn
