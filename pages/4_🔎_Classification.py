@@ -18,7 +18,6 @@ from imblearn.over_sampling import SMOTE
 def load_data():
     data = pd.read_parquet('./data/dataset.parquet')
 
-    # Entferne unerwünschte Spalten direkt nach dem Laden
     excluded_columns = ['Filename', 'Patient Number', 'Participant ID_x',
                         'Adult BMI', 'Child Weight', 'Child Height', 'Participant ID_y']
     data = data.drop(
@@ -29,18 +28,15 @@ def load_data():
 
 data = load_data()
 
-# Sidebar configuration
 apply_imputation, imputation_method = configure_sidebar()
 numeric_data = data.select_dtypes(include=['float64', 'int64'])
 
-# Target column selection
 st.title("Classification Analysis")
 st.subheader("Select Target Column")
 
 target_column = st.selectbox(
     "Choose the target column for classification:", options=data.columns)
 
-# Features selection
 st.subheader("Select Features")
 manuel_or_all = st.checkbox("Use all columns as features", value=False)
 if manuel_or_all:
@@ -55,7 +51,6 @@ else:
 if target_column not in data.columns or not feature_columns:
     st.error("Please select valid target and feature columns.")
 else:
-    # Data preprocessing
     if apply_imputation:
         if imputation_method == "Mean":
             imputer = SimpleImputer(strategy="mean")
@@ -66,26 +61,21 @@ else:
 
         data[numeric_data.columns] = imputer.fit_transform(numeric_data)
     else:
-        # If no imputation is applied, drop rows with missing values
         data = data.dropna()
 
-    # Encoding target variable if categorical
     if data[target_column].dtype == 'object':
         label_encoder = LabelEncoder()
         data[target_column] = label_encoder.fit_transform(data[target_column])
     else:
         label_encoder = None
 
-    # Scaling features
     scaler = StandardScaler()
     scaled_features = scaler.fit_transform(data[feature_columns])
 
-    # Splitting data
     X_train, X_test, y_train, y_test = train_test_split(
         scaled_features, data[target_column], test_size=0.2, random_state=42
     )
 
-    # Choose Sampling Method
     st.subheader("Choose Sampling Method")
     sampling_method = st.radio(
         "Select a sampling method to address data imbalance:",
@@ -101,13 +91,11 @@ else:
         X_train, y_train = oversampler.fit_resample(X_train, y_train)
 
     elif sampling_method == "SMOTE":
-        # Adjust the number of neighbors for SMOTE based on the number of samples in the minority class
         minority_class_count = min(np.bincount(y_train))
         n_neighbors = min(5, minority_class_count - 1)
         oversampler = SMOTE(random_state=32, k_neighbors=n_neighbors)
         X_train, y_train = oversampler.fit_resample(X_train, y_train)
 
-    # Classification algorithm selection
     st.subheader("Select Classification Algorithm")
     algorithm = st.radio(
         "Choose a classification algorithm:",
@@ -121,11 +109,9 @@ else:
         classifier.fit(X_train, y_train)
         y_pred = classifier.predict(X_test)
 
-        # Evaluation metrics
         accuracy = accuracy_score(y_test, y_pred)
         st.write(f"**Accuracy:** {accuracy:.2f}")
 
-        # Extract Precision and F1-Score
         if label_encoder:
             target_names = [str(i) for i in label_encoder.classes_]
         else:
@@ -136,14 +122,12 @@ else:
             output_dict=True, zero_division=1
         )
 
-        # Summarize and display metrics
         precision = class_report["weighted avg"]["precision"]
         f1_score = class_report["weighted avg"]["f1-score"]
 
         st.write(f"**Precision:** {precision:.2f}")
         st.write(f"**F1-Score:** {f1_score:.2f}")
 
-        # t-SNE Visualization
         st.subheader("2D-Visualization of Classification using t-SNE")
         tsne_results = TSNE(n_components=2, perplexity=30, learning_rate=200,
                             random_state=42).fit_transform(X_train)
@@ -151,7 +135,6 @@ else:
         tsne_df = pd.DataFrame(tsne_results, columns=["TSNE-1", "TSNE-2"])
         tsne_df["Class"] = y_train
 
-        # Map numeric class labels to class names
         if label_encoder:
             class_names = label_encoder.classes_
         else:
@@ -161,7 +144,6 @@ else:
                          for i in range(len(class_names))}
         tsne_df["Class_Name"] = tsne_df["Class"].map(class_mapping)
 
-        # Plot the t-SNE results
         fig_tsne = px.scatter(
             tsne_df, x="TSNE-1", y="TSNE-2", color="Class_Name",
             title="t-SNE Visualization after Sampling",
